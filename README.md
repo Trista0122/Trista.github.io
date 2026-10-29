@@ -139,7 +139,7 @@ npm install
 npm run dev
 ```
 
-然后打开终端里显示的地址（默认 <http://localhost:4321/Trista.github.io/>），修改内容后页面会自动刷新。
+然后打开终端里显示的地址（默认 <http://localhost:4321/>），修改内容后页面会自动刷新。
 
 模拟正式环境（先构建再预览）：
 
@@ -155,14 +155,14 @@ npm run preview
 
 ## 4. 部署
 
-推送到 `main` 分支（或当前开发分支 `claude/kind-keller-cuizmi`）后，`.github/workflows/deploy.yml` 会自动构建并发布到 GitHub Pages。也可以在仓库的 **Actions → Deploy to GitHub Pages → Run workflow** 手动触发。
+推送（或合并 PR）到 `main` 分支后，`.github/workflows/deploy.yml` 会自动构建并发布到 GitHub Pages；其他分支不会触发部署。也可以在仓库的 **Actions → Deploy to GitHub Pages → Run workflow** 手动触发。
 
 第一次使用需要在仓库 **Settings → Pages → Build and deployment → Source** 里选择 **GitHub Actions**。
 
-关于网址（`site` 与 `base`）：
-- 当前仓库是 `Trista0122/Trista.github.io`，GitHub 把它当作"项目站点"，地址是 `https://trista0122.github.io/Trista.github.io/`。
-- 工作流会通过 `actions/configure-pages` 自动拿到正确的 `site` 和 `base` 并传给 Astro（见 `astro.config.mjs`），所以以后把仓库改名为 `trista0122.github.io`（用户站点，地址变成 `https://trista0122.github.io/`）或绑定自定义域名，都不用改代码。
-- 隐私提示：仓库名和 GitHub 用户名会出现在网址里。如果不想暴露，可以把仓库改名（例如 `trista0122.github.io` 或 `homepage`）。
+关于网址（`site` 与 `base`，见 `astro.config.mjs`）：
+- 仓库 `Trista0122/Trista0122.github.io` 是"用户站点"，地址为 `https://trista0122.github.io/`，所以 `site = 'https://trista0122.github.io'`、`base = '/'`。
+- 站内链接都通过 `src/i18n/utils.ts` 中的 `url()` / `localizedUrl()` 生成，Markdown 里的站内链接请用相对路径（如 `../notes/aes-gf28/`），这样即使以后改 base 也不会失效。
+- 如果绑定自定义域名，把 `site` 改成新域名即可，`base` 保持 `/`。
 
 ---
 

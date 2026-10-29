@@ -10,7 +10,7 @@ const { lang } = Astro.props;
 const t = useTranslations(lang);
 ---
 
-<BaseLayout title="404" altHref={localizedUrl('/', lang === 'zh' ? 'en' : 'zh')}>
+<BaseLayout title="404" noindex altHref={localizedUrl('/', lang === 'zh' ? 'en' : 'zh')}>
   <div class="container nf">
     <p class="code">404</p>
     <h1>{t('notfound.title')}</h1>

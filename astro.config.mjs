@@ -6,18 +6,15 @@ import sitemap from '@astrojs/sitemap';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 
-// GitHub Pages 地址。
-// 在 GitHub Actions 中由 actions/configure-pages 自动注入 SITE / BASE，
-// 本地开发时使用下面的默认值。
-// 当前仓库名为 Trista.github.io（属于账号 Trista0122），因此是"项目站点"：
-//   https://trista0122.github.io/Trista.github.io/
-// 如果以后把仓库改名为 trista0122.github.io（用户站点），BASE 会自动变成 "/"。
-const site = process.env.SITE || 'https://trista0122.github.io';
-const base = process.env.BASE ?? '/Trista.github.io';
+// GitHub Pages 地址：仓库 Trista0122/Trista0122.github.io 是"用户站点"，
+// 直接部署在域名根目录 https://trista0122.github.io/，因此 base 为 '/'。
+// 站内链接统一通过 src/i18n/utils.ts 的 url() 生成，以后若改回项目站点只需改这里。
+const site = 'https://trista0122.github.io';
+const base = '/';
 
 export default defineConfig({
   site,
-  base: base || '/',
+  base,
   trailingSlash: 'ignore',
   i18n: {
     defaultLocale: 'zh',
