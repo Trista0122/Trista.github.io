@@ -1,0 +1,114 @@
+---
+import { ClientRouter } from 'astro:transitions';
+import 'katex/dist/katex.min.css';
+import '../styles/global.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { SITE } from '../site.config';
+import { getLangFromUrl, switchLangPath, useTranslations, url } from '../i18n/utils';
+
+interface Props {
+  title?: string;
+  description?: string;
+  /** 切换语言后的目标地址；不传则自动推导"同一路径的另一语言版本" */
+  altHref?: string;
+}
+
+const { title, description, altHref } = Astro.props;
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+const otherLang = lang === 'zh' ? 'en' : 'zh';
+const alt = altHref ?? switchLangPath(Astro.url, otherLang);
+const fullTitle = title ? `${title} · ${SITE.nickname}` : SITE.nickname;
+const desc = description ?? SITE.description[lang];
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const altAbs = new URL(alt, Astro.site);
+---
+
+<!doctype html>
+<html lang={lang === 'zh' ? 'zh-CN' : 'en'}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={desc} />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="theme-color" content="#7c3aed" />
+    <link rel="icon" type="image/svg+xml" href={url('/favicon.svg')} />
+    <link rel="canonical" href={canonical} />
+    <link rel="alternate" hreflang={lang === 'zh' ? 'zh-CN' : 'en'} href={canonical} />
+    <link rel="alternate" hreflang={otherLang === 'zh' ? 'zh-CN' : 'en'} href={altAbs} />
+    <link rel="sitemap" href={url('/sitemap-index.xml')} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={desc} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonical} />
+
+    <!-- 尽早确定主题，避免闪烁；也标记 JS 可用 -->
+    <script is:inline>
+      (() => {
+        const KEY = 'theme';
+        const mq = window.matchMedia('(prefers-color-scheme: dark)');
+        const stored = () => {
+          try { return localStorage.getItem(KEY); } catch { return null; }
+        };
+        const apply = (doc = document) => {
+          const s = stored();
+          const theme = s === 'light' || s === 'dark' ? s : mq.matches ? 'dark' : 'light';
+          doc.documentElement.dataset.theme = theme;
+          doc.documentElement.classList.add('js');
+        };
+        apply();
+        if (!window.__themeInit) {
+          window.__themeInit = true;
+          // View Transitions：新页面替换前先设置好主题，防止闪烁
+          document.addEventListener('astro:before-swap', (e) => apply(e.newDocument));
+          mq.addEventListener('change', () => { if (!stored()) apply(); });
+          document.addEventListener('click', (e) => {
+            const btn = e.target.closest && e.target.closest('.theme-toggle');
+            if (!btn) return;
+            const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+            try { localStorage.setItem(KEY, next); } catch {}
+            apply();
+          });
+        }
+      })();
+    </script>
+    <ClientRouter />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">{t('skip')}</a>
+    <Header altHref={alt} />
+    <main id="main" transition:animate="fade">
+      <slot />
+    </main>
+    <Footer />
+
+    <script>
+      // 元素进入视口时淡入上移（每次页面切换后重新绑定）
+      let observer: IntersectionObserver | undefined;
+      function initReveal() {
+        observer?.disconnect();
+        const els = document.querySelectorAll<HTMLElement>('.reveal:not(.is-visible)');
+        const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (reduce || !('IntersectionObserver' in window)) {
+          els.forEach((el) => el.classList.add('is-visible'));
+          return;
+        }
+        observer = new IntersectionObserver(
+          (entries) => {
+            for (const entry of entries) {
+              if (entry.isIntersecting) {
+                entry.target.classList.add('is-visible');
+                observer?.unobserve(entry.target);
+              }
+            }
+          },
+          { rootMargin: '0px 0px -8% 0px', threshold: 0.08 },
+        );
+        els.forEach((el) => observer!.observe(el));
+      }
+      document.addEventListener('astro:page-load', initReveal);
+    </script>
+  </body>
+</html>

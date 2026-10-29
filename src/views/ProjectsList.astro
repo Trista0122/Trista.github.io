@@ -1,0 +1,24 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHead from '../components/PageHead.astro';
+import ProjectCard from '../components/ProjectCard.astro';
+import { useTranslations } from '../i18n/utils';
+import type { Lang } from '../i18n/ui';
+import { getProjects } from '../lib/content';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+const projects = await getProjects(lang);
+---
+
+<BaseLayout title={t('projects.title')} description={t('projects.desc')}>
+  <div class="container wide">
+    <PageHead title={t('projects.title')} description={t('projects.desc')} />
+    <div class="grid two">
+      {projects.map((p, i) => <ProjectCard project={p} lang={lang} delay={(i % 2) * 0.08} />)}
+    </div>
+  </div>
+</BaseLayout>

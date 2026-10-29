@@ -1,0 +1,90 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHead from '../components/PageHead.astro';
+import NoteCard from '../components/NoteCard.astro';
+import { useTranslations } from '../i18n/utils';
+import type { Lang } from '../i18n/ui';
+import { getNotes } from '../lib/content';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+const notes = await getNotes(lang);
+
+// 统计标签（按出现次数排序）
+const counts = new Map<string, number>();
+notes.forEach((n) => n.data.tags.forEach((tag) => counts.set(tag, (counts.get(tag) ?? 0) + 1)));
+const tags = [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+---
+
+<BaseLayout title={t('notes.title')} description={t('notes.desc')}>
+  <div class="container">
+    <PageHead title={t('notes.title')} description={t('notes.desc')} />
+
+    {
+      tags.length > 0 && (
+        <div class="filter reveal" role="group" aria-label={t('notes.filter')} data-tag-filter>
+          <button class="tag" type="button" data-tag="" aria-pressed="true">
+            {t('notes.all')} <span class="count">{notes.length}</span>
+          </button>
+          {tags.map(([tag, n]) => (
+            <button class="tag" type="button" data-tag={tag} aria-pressed="false">
+              #{tag} <span class="count">{n}</span>
+            </button>
+          ))}
+        </div>
+      )
+    }
+
+    <div class="grid notes-list" data-notes>
+      {notes.map((n, i) => <NoteCard note={n} lang={lang} delay={Math.min(i, 4) * 0.06} />)}
+    </div>
+    <p class="empty meta" data-empty hidden>{t('notes.empty')}</p>
+  </div>
+</BaseLayout>
+
+<script>
+  // 标签筛选：点击按钮过滤卡片，并把选择写进 ?tag= 方便分享
+  function initTagFilter() {
+    const group = document.querySelector<HTMLElement>('[data-tag-filter]');
+    if (!group) return;
+    const buttons = [...group.querySelectorAll<HTMLButtonElement>('button[data-tag]')];
+    const cards = [...document.querySelectorAll<HTMLElement>('[data-notes] > [data-tags]')];
+    const empty = document.querySelector<HTMLElement>('[data-empty]');
+
+    const select = (tag: string, updateUrl = true) => {
+      if (tag && !buttons.some((b) => b.dataset.tag === tag)) tag = '';
+      buttons.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.tag === tag)));
+      let shown = 0;
+      cards.forEach((c) => {
+        const match = !tag || (c.dataset.tags ?? '').split('|').includes(tag);
+        c.hidden = !match;
+        if (match) {
+          shown++;
+          c.classList.add('is-visible');
+        }
+      });
+      if (empty) empty.hidden = shown > 0;
+      if (updateUrl) {
+        const u = new URL(location.href);
+        if (tag) u.searchParams.set('tag', tag);
+        else u.searchParams.delete('tag');
+        history.replaceState(history.state, '', u);
+      }
+    };
+
+    buttons.forEach((b) => b.addEventListener('click', () => select(b.dataset.tag ?? '')));
+    const initial = new URL(location.href).searchParams.get('tag');
+    if (initial) select(initial, false);
+  }
+  document.addEventListener('astro:page-load', initTagFilter);
+</script>
+
+<style>
+  .filter { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem; }
+  .count { opacity: 0.65; font-size: 0.78em; margin-left: 0.15rem; }
+  .notes-list > [hidden] { display: none; }
+  .empty { text-align: center; padding: 2rem 0; }
+</style>
