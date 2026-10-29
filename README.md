@@ -1,4 +1,4 @@
-# NICKNAME 的个人主页
+# Trista 的个人主页
 
 一个用 [Astro](https://astro.build) 搭建的"成长型个人主页"：项目、学习笔记、此刻、书单、生活。中文为默认语言（`/`），英文在 `/en/`。通过 GitHub Actions 自动部署到 GitHub Pages。
 
@@ -16,7 +16,7 @@
 
 ```ts
 export const SITE = {
-  nickname: 'NICKNAME',          // 站名 / 昵称，导航栏、标题、页脚都会用到
+  nickname: 'Trista',            // 站名 / 昵称，导航栏、标题、页脚都会用到
   avatarLetter: '',              // 头像里的字母，留空则取昵称首字母
   email: 'hello@example.com',    // 联系邮箱
   github: 'https://github.com/Trista0122',

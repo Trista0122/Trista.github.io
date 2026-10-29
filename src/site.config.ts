@@ -1,10 +1,9 @@
 /**
  * 站点个人信息 —— 只需要改这一个文件。
- * 全站不出现真实姓名、学校、照片；昵称请替换 NICKNAME。
  */
 export const SITE = {
   /** 站名 / 昵称（导航栏、标题、头像字母都从这里取） */
-  nickname: 'NICKNAME',
+  nickname: 'Trista',
   /** 头像中显示的字母；留空则自动取昵称首字母 */
   avatarLetter: '',
   /** 联系邮箱（占位） */
