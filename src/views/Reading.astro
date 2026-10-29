@@ -1,0 +1,77 @@
+---
+import { render } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHead from '../components/PageHead.astro';
+import { useTranslations } from '../i18n/utils';
+import type { Lang } from '../i18n/ui';
+import { getByLang } from '../lib/content';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+
+const items = (await getByLang('reading', lang)).sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+const rendered = await Promise.all(items.map(async (item) => ({ item, Content: (await render(item)).Content })));
+const groups = (['book', 'podcast'] as const)
+  .map((type) => ({ type, list: rendered.filter((r) => r.item.data.type === type) }))
+  .filter((g) => g.list.length > 0);
+---
+
+<BaseLayout title={t('reading.title')} description={t('reading.desc')}>
+  <div class="container">
+    <PageHead title={t('reading.title')} description={t('reading.desc')} />
+
+    {
+      groups.map((g) => (
+        <section class="group">
+          <h2 class="reveal">
+            <span class="kind" aria-hidden="true">{g.type === 'book' ? '📚' : '🎧'}</span>
+            {t(g.type === 'book' ? 'reading.book' : 'reading.podcast')}
+          </h2>
+          <ul class="list">
+            {g.list.map(({ item, Content }) => (
+              <li class="card hoverable reveal">
+                <div class="row">
+                  <h3>{item.data.title}</h3>
+                  <span class="status">{t(`reading.status.${item.data.status}`)}</span>
+                </div>
+                <p class="meta">{item.data.creator}</p>
+                <div class="review prose">
+                  <Content />
+                </div>
+                {item.data.tags.length > 0 && (
+                  <ul class="tags">
+                    {item.data.tags.map((tag) => (
+                      <li class="tag">{tag}</li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))
+    }
+  </div>
+</BaseLayout>
+
+<style>
+  .group h2 { display: flex; align-items: center; gap: 0.5rem; margin-top: 1rem; }
+  .list { list-style: none; padding: 0; margin: 0; display: grid; gap: 1rem; }
+  .row { display: flex; justify-content: space-between; align-items: baseline; gap: 0.75rem; }
+  .status {
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.05rem 0.55rem;
+    border-radius: 999px;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+  }
+  .meta { margin: 0 0 0.5rem !important; }
+  .review { font-size: 0.97rem; }
+  .review :global(p) { color: var(--text); margin-bottom: 0.4rem; }
+  .review :global(p:last-child) { margin-bottom: 0; }
+</style>

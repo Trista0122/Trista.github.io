@@ -1,0 +1,163 @@
+---
+import { SITE } from '../site.config';
+import { getLangFromUrl, useTranslations, localizedUrl, stripBase } from '../i18n/utils';
+import Avatar from './Avatar.astro';
+
+interface Props {
+  /** 切换语言后要跳转的地址 */
+  altHref: string;
+}
+const { altHref } = Astro.props;
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+const otherLang = lang === 'zh' ? 'en' : 'zh';
+
+const nav = [
+  { path: '/', key: 'nav.home' },
+  { path: '/now/', key: 'nav.now' },
+  { path: '/projects/', key: 'nav.projects' },
+  { path: '/notes/', key: 'nav.notes' },
+  { path: '/reading/', key: 'nav.reading' },
+  { path: '/life/', key: 'nav.life' },
+] as const;
+
+// 当前所在栏目（用于高亮）
+const current = stripBase(Astro.url.pathname).replace(/^\/en(?=\/|$)/, '') || '/';
+const isActive = (p: string) => (p === '/' ? current === '/' : current.startsWith(p));
+---
+
+<header class="site-header">
+  <div class="container wide bar">
+    <a class="brand" href={localizedUrl('/', lang)}>
+      <Avatar size={30} id="brand-avatar" />
+      <span>{SITE.nickname}</span>
+    </a>
+
+    <nav class="nav" aria-label="Main">
+      <ul>
+        {
+          nav.map((item) => (
+            <li>
+              <a
+                href={localizedUrl(item.path, lang)}
+                aria-current={isActive(item.path) ? 'page' : undefined}
+              >
+                {t(item.key)}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <div class="actions">
+      <a
+        class="icon-btn lang-btn"
+        href={altHref}
+        hreflang={otherLang === 'zh' ? 'zh-CN' : 'en'}
+        lang={otherLang === 'zh' ? 'zh-CN' : 'en'}
+        aria-label={t('lang.switchLabel')}
+        title={t('lang.switchLabel')}
+        data-astro-prefetch
+      >
+        {t('lang.switch')}
+      </a>
+      <button class="icon-btn theme-toggle" type="button" aria-label={t('theme.toggle')} title={t('theme.toggle')}>
+        <svg class="icon-sun" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="12" cy="12" r="4.5"></circle>
+          <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: var(--header-bg);
+    backdrop-filter: saturate(160%) blur(12px);
+    -webkit-backdrop-filter: saturate(160%) blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .bar {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 0.5rem 1rem;
+    min-height: 3.75rem;
+  }
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-weight: 700;
+    color: var(--text);
+    text-decoration: none;
+    letter-spacing: 0.02em;
+  }
+  .nav ul {
+    display: flex;
+    justify-content: center;
+    gap: 0.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .nav a {
+    display: block;
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    transition: color 0.2s, background-color 0.2s;
+  }
+  .nav a:hover { color: var(--primary); background: var(--tag-bg); }
+  .nav a[aria-current='page'] { color: var(--tag-text); background: var(--tag-bg); font-weight: 600; }
+
+  .actions { display: flex; gap: 0.4rem; justify-self: end; }
+  .icon-btn {
+    display: inline-grid;
+    place-items: center;
+    min-width: 2.25rem;
+    height: 2.25rem;
+    padding: 0 0.55rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font: 600 0.85rem/1 var(--font-sans);
+    text-decoration: none;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s, transform 0.2s;
+  }
+  .icon-btn:hover { border-color: var(--purple-light); color: var(--primary); }
+
+  /* 主题图标：浅色显示月亮（点了变深色），深色显示太阳 */
+  .icon-sun { display: none; }
+  :global(:root[data-theme='dark']) .icon-sun { display: block; }
+  :global(:root[data-theme='dark']) .icon-moon { display: none; }
+
+  /* 手机：导航放到第二行，可横向滑动 */
+  @media (max-width: 760px) {
+    .bar { grid-template-columns: 1fr auto; padding-top: 0.5rem; }
+    .nav {
+      grid-column: 1 / -1;
+      grid-row: 2;
+      margin: 0 -1.25rem;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    .nav::-webkit-scrollbar { display: none; }
+    .nav ul { justify-content: flex-start; padding: 0 1rem 0.5rem; }
+    .nav a { padding: 0.3rem 0.7rem; }
+  }
+</style>

@@ -1,0 +1,35 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { useTranslations, localizedUrl } from '../i18n/utils';
+import type { Lang } from '../i18n/ui';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+---
+
+<BaseLayout title="404" noindex altHref={localizedUrl('/', lang === 'zh' ? 'en' : 'zh')}>
+  <div class="container nf">
+    <p class="code">404</p>
+    <h1>{t('notfound.title')}</h1>
+    <p class="meta">{t('notfound.desc')}</p>
+    <a class="btn primary" href={localizedUrl('/', lang)}>{t('notfound.home')}</a>
+  </div>
+</BaseLayout>
+
+<style>
+  .nf { text-align: center; padding-top: 5rem; }
+  .code {
+    margin: 0;
+    font-size: 5rem;
+    font-weight: 800;
+    line-height: 1;
+    background: linear-gradient(135deg, #a78bfa, var(--purple), var(--purple-deep));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .btn { margin-top: 1rem; }
+</style>

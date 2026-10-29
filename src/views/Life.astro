@@ -1,0 +1,75 @@
+---
+import { render } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHead from '../components/PageHead.astro';
+import { useTranslations, formatDate } from '../i18n/utils';
+import type { Lang } from '../i18n/ui';
+import { getByLang } from '../lib/content';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+
+const posts = (await getByLang('life', lang)).sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+const rendered = await Promise.all(posts.map(async (p) => ({ post: p, Content: (await render(p)).Content })));
+---
+
+<BaseLayout title={t('life.title')} description={t('life.desc')}>
+  <div class="container">
+    <PageHead title={t('life.title')} description={t('life.desc')} />
+
+    <ol class="timeline">
+      {
+        rendered.map(({ post, Content }) => (
+          <li class="reveal">
+            <span class="emoji" aria-hidden="true">{post.data.emoji}</span>
+            <article class="card hoverable">
+              <time class="meta" datetime={post.data.date.toISOString()}>{formatDate(post.data.date, lang)}</time>
+              <h3>{post.data.title}</h3>
+              <div class="prose body">
+                <Content />
+              </div>
+              {post.data.tags.length > 0 && (
+                <ul class="tags">
+                  {post.data.tags.map((tag) => (
+                    <li class="tag">{tag}</li>
+                  ))}
+                </ul>
+              )}
+            </article>
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+</BaseLayout>
+
+<style>
+  .timeline {
+    list-style: none;
+    margin: 0;
+    padding: 0 0 0 1.4rem;
+    border-left: 2px dashed var(--border);
+    display: grid;
+    gap: 1.5rem;
+  }
+  .timeline li { position: relative; }
+  .emoji {
+    position: absolute;
+    left: calc(-1.4rem - 1.05rem);
+    top: 1rem;
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 2px solid var(--purple-light);
+    font-size: 1rem;
+  }
+  .body { font-size: 0.98rem; margin-top: 0.4rem; }
+  .body :global(p) { color: var(--text); }
+  .body :global(p:last-child) { margin-bottom: 0; }
+</style>

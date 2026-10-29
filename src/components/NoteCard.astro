@@ -1,0 +1,34 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { formatDate, localizedUrl } from '../i18n/utils';
+import type { Lang } from '../i18n/ui';
+import { slugOf } from '../lib/content';
+
+interface Props {
+  note: CollectionEntry<'notes'>;
+  lang: Lang;
+  delay?: number;
+}
+const { note, lang, delay = 0 } = Astro.props;
+const { title, description, date, tags } = note.data;
+---
+
+<a
+  class="card note-card reveal"
+  href={localizedUrl(`/notes/${slugOf(note)}/`, lang)}
+  data-tags={tags.join('|')}
+  style={`--reveal-delay:${delay}s`}
+>
+  <time class="meta" datetime={date.toISOString()}>{formatDate(date, lang)}</time>
+  <h3>{title}</h3>
+  <p>{description}</p>
+  {
+    tags.length > 0 && (
+      <ul class="tags">
+        {tags.map((tag) => (
+          <li class="tag">#{tag}</li>
+        ))}
+      </ul>
+    )
+  }
+</a>

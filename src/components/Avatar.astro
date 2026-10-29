@@ -1,0 +1,57 @@
+---
+/** 紫色渐变几何头像：不用照片，只显示昵称首字母 */
+import { SITE } from '../site.config';
+
+interface Props {
+  size?: number;
+  id?: string;
+  class?: string;
+}
+const { size = 96, id = 'avatar', class: className } = Astro.props;
+const letter = (SITE.avatarLetter || SITE.nickname.trim()[0] || '?').toUpperCase();
+---
+
+<svg
+  class:list={['avatar', className]}
+  width={size}
+  height={size}
+  viewBox="0 0 120 120"
+  role="img"
+  aria-label={`${SITE.nickname} avatar`}
+>
+  <defs>
+    <linearGradient id={`${id}-bg`} x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#a78bfa"></stop>
+      <stop offset="55%" stop-color="#7c3aed"></stop>
+      <stop offset="100%" stop-color="#4c1d95"></stop>
+    </linearGradient>
+    <linearGradient id={`${id}-shine`} x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.35"></stop>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"></stop>
+    </linearGradient>
+    <clipPath id={`${id}-clip`}>
+      <rect width="120" height="120" rx="32"></rect>
+    </clipPath>
+  </defs>
+  <g clip-path={`url(#${id}-clip)`}>
+    <rect width="120" height="120" fill={`url(#${id}-bg)`}></rect>
+    <circle cx="98" cy="18" r="30" fill="#c4b5fd" opacity="0.35"></circle>
+    <polygon points="0,120 0,70 52,120" fill="#4c1d95" opacity="0.45"></polygon>
+    <circle cx="96" cy="96" r="7" fill="#f59e0b"></circle>
+    <rect width="120" height="60" fill={`url(#${id}-shine)`}></rect>
+  </g>
+  <text
+    x="60"
+    y="62"
+    text-anchor="middle"
+    dominant-baseline="central"
+    fill="#ffffff"
+    font-size="58"
+    font-weight="700"
+    font-family="-apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif"
+  >{letter}</text>
+</svg>
+
+<style>
+  .avatar { display: block; flex-shrink: 0; filter: drop-shadow(0 8px 20px rgba(124, 58, 237, 0.3)); }
+</style>

@@ -1,0 +1,13 @@
+---
+import View from '../../../views/NoteDetail.astro';
+import { getNotes, slugOf } from '../../../lib/content';
+
+export async function getStaticPaths() {
+  const entries = await getNotes('en');
+  return entries.map((entry) => ({ params: { slug: slugOf(entry) }, props: { entry } }));
+}
+
+const { entry } = Astro.props;
+---
+
+<View lang="en" note={entry} />

@@ -1,0 +1,88 @@
+---
+import { render, type CollectionEntry } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { useTranslations, localizedUrl, formatDate } from '../i18n/utils';
+import type { Lang } from '../i18n/ui';
+import { slugOf, hasCounterpart, readingMinutes } from '../lib/content';
+
+interface Props {
+  lang: Lang;
+  note: CollectionEntry<'notes'>;
+}
+const { lang, note } = Astro.props;
+const t = useTranslations(lang);
+const { Content, headings } = await render(note);
+const { title, description, date, updated, tags } = note.data;
+
+const slug = slugOf(note);
+const other: Lang = lang === 'zh' ? 'en' : 'zh';
+const altHref = (await hasCounterpart('notes', slug, other))
+  ? localizedUrl(`/notes/${slug}/`, other)
+  : localizedUrl('/notes/', other);
+const minutes = readingMinutes(note.body, lang);
+const toc = headings.filter((h) => h.depth === 2);
+---
+
+<BaseLayout title={title} description={description} altHref={altHref}>
+  <article class="container">
+    <a class="back reveal" href={localizedUrl('/notes/', lang)}>{t('notes.back')}</a>
+    <header class="page-head reveal">
+      <h1>{title}</h1>
+      <p class="meta">
+        <time datetime={date.toISOString()}>{formatDate(date, lang)}</time>
+        {
+          updated && (
+            <span>
+              {' · '}
+              {t('notes.updated')} <time datetime={updated.toISOString()}>{formatDate(updated, lang)}</time>
+            </span>
+          )
+        }
+        {' · '}
+        {minutes} {t('notes.minRead')}
+      </p>
+      {
+        tags.length > 0 && (
+          <ul class="tags">
+            {tags.map((tag) => (
+              <li>
+                <a class="tag" href={`${localizedUrl('/notes/', lang)}?tag=${encodeURIComponent(tag)}`}>
+                  #{tag}
+                </a>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+    </header>
+
+    {
+      toc.length > 2 && (
+        <nav class="toc card reveal" aria-label="TOC">
+          <ul>
+            {toc.map((h) => (
+              <li>
+                <a href={`#${h.slug}`}>{h.text}</a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      )
+    }
+
+    <div class="prose reveal">
+      <Content />
+    </div>
+  </article>
+</BaseLayout>
+
+<style>
+  .back { display: inline-block; margin-top: 2rem; font-size: 0.92rem; text-decoration: none; }
+  .page-head { padding-top: 1rem; }
+  .tags a { text-decoration: none; }
+  .toc { margin-bottom: 2rem; padding: 0.9rem 1.2rem; font-size: 0.95rem; }
+  .toc ul { margin: 0; padding: 0; list-style: none; }
+  .toc li { margin: 0.15rem 0; }
+  .toc a { text-decoration: none; color: var(--text-muted); }
+  .toc a:hover { color: var(--primary); }
+</style>

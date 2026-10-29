@@ -1,0 +1,73 @@
+---
+import { render } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHead from '../components/PageHead.astro';
+import { useTranslations, formatDate } from '../i18n/utils';
+import type { Lang } from '../i18n/ui';
+import { getByLang } from '../lib/content';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+
+// 取最新的一条（可以保留旧月份的文件作为存档）
+const entries = (await getByLang('now', lang)).sort((a, b) => b.data.updated.valueOf() - a.data.updated.valueOf());
+const latest = entries[0];
+const { Content } = latest ? await render(latest) : { Content: null };
+---
+
+<BaseLayout title={t('now.title')} description={t('now.desc')}>
+  <div class="container">
+    {
+      latest && (
+        <p class="updated reveal">
+          <span class="dot" aria-hidden="true" />
+          {t('now.updated')}{' '}
+          <time datetime={latest.data.updated.toISOString()}>{formatDate(latest.data.updated, lang)}</time>
+          {latest.data.location && <span> · {latest.data.location}</span>}
+        </p>
+      )
+    }
+    <PageHead title={t('now.title')} description={t('now.desc')} />
+    {
+      Content && (
+        <article class="prose reveal">
+          <Content />
+        </article>
+      )
+    }
+  </div>
+</BaseLayout>
+
+<style>
+  .updated {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 2rem 0 0;
+    padding: 0.3rem 0.85rem;
+    border-radius: 999px;
+    background: var(--tag-bg);
+    color: var(--tag-text);
+    font-size: 0.88rem;
+    font-weight: 600;
+  }
+  .updated + :global(.page-head) { padding-top: 1.25rem; }
+  .dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.6);
+    animation: pulse 2.4s ease-out infinite;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.55); }
+    80%, 100% { box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .dot { animation: none; }
+  }
+</style>
